@@ -1,0 +1,8 @@
+node_modules
+.vinxi
+.output
+.vercel
+dist
+.env
+drizzle/migrations
+routeTree.gen.ts
