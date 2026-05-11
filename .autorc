@@ -1,5 +1,10 @@
 {
-  "plugins": [
-    "git-tag"
-  ]
+	"owner": "stephansama",
+	"plugins": [
+		"git-tag",
+		["conventional-commits", { "defaultReleaseType": "patch" }]
+	],
+	"repo": "monorepo",
+	"name": "stephansama",
+	"email": "stephanrandle@hotmail.com"
 }
