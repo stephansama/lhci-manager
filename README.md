@@ -74,6 +74,16 @@ LHCI Manager is a self-hosted Lighthouse CI management dashboard designed to hel
 - `pnpm db:push`: Syncs the Drizzle schema with the database.
 - `pnpm db:studio`: Opens Drizzle Studio to explore your data.
 
+## Deployment & Releases
+
+LHCI Manager uses an automated release pipeline:
+1. **GitHub Releases**: Triggered by `intuit/auto` on pushes to `main`. It creates a semantic version tag and a GitHub Release.
+2. **Docker Publishing**: Triggered by new version tags (e.g., `v1.0.0`). It builds and pushes images to:
+   - **Docker Hub**: `docker.io/<username>/lhci-manager-*`
+   - **GitHub Container Registry**: `ghcr.io/<owner>/lhci-manager-*`
+
+Images are tagged with both the semantic version and `latest`.
+
 ## Architecture
 
 LHCI Manager is a multi-process application:

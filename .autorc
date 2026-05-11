@@ -1,0 +1,12 @@
+{
+  "plugins": [
+    [
+      "npm",
+      {
+        "set-version": true,
+        "publish": false
+      }
+    ],
+    "released"
+  ]
+}
