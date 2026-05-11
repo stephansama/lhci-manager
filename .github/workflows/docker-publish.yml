@@ -3,7 +3,16 @@ name: Publish Docker Images
 on:
   push:
     tags:
-      - 'v*'
+      - "v*"
+
+permissions:
+  actions: read
+  contents: write
+  deployments: write
+  id-token: write
+  issues: write
+  pull-requests: write
+  statuses: write
 
 jobs:
   push_to_registries:
