@@ -1,0 +1,39 @@
+name: Publish Docker Images
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  push_to_registry:
+    name: Push Docker image to Docker Hub
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push Web image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile.web
+          push: true
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/lhci-manager-web:latest
+
+      - name: Build and push Worker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile.worker
+          push: true
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/lhci-manager-worker:latest
