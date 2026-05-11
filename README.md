@@ -45,8 +45,14 @@ LHCI Manager is a self-hosted Lighthouse CI management dashboard designed to hel
    ```
 
 3. **Configure Environment**:
-   Create a `.env` file based on the required variables (see `docker-compose.yml` for reference):
+   Create a `.env` file based on the required variables:
    ```env
+   # Database Credentials
+   POSTGRES_USER=postgres
+   POSTGRES_PASSWORD=postgres
+   POSTGRES_DB=lhci
+
+   # App Configuration
    DATABASE_URL=postgres://postgres:postgres@localhost:5432/lhci
    BETTER_AUTH_SECRET=your_secret_key
    BETTER_AUTH_URL=http://localhost:3000

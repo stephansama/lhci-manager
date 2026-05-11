@@ -4,9 +4,9 @@ services:
   db:
     image: postgres:15-alpine
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: lhci
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-lhci}
     ports:
       - "5432:5432"
     volumes:
@@ -17,9 +17,9 @@ services:
       context: .
       dockerfile: Dockerfile.web
     environment:
-      DATABASE_URL: postgres://postgres:postgres@db:5432/lhci
-      BETTER_AUTH_SECRET: a_very_secret_key_12345
-      BETTER_AUTH_URL: http://localhost:3000
+      DATABASE_URL: postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-lhci}
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
+      BETTER_AUTH_URL: ${BETTER_AUTH_URL:-http://localhost:3000}
     ports:
       - "3000:3000"
     depends_on:
@@ -30,7 +30,7 @@ services:
       context: .
       dockerfile: Dockerfile.worker
     environment:
-      DATABASE_URL: postgres://postgres:postgres@db:5432/lhci
+      DATABASE_URL: postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-lhci}
     depends_on:
       - db
 
