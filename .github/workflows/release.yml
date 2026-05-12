@@ -6,7 +6,7 @@ on:
       - main
 
 permissions:
-  actions: read
+  actions: write
   contents: write
   deployments: write
   id-token: write
@@ -37,7 +37,30 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
+      - name: Record existing tags
+        run: git fetch --tags && git tag > /tmp/tags_before.txt
+
       - name: Create Release
         run: npx auto shipit
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Detect new tag
+        id: new-tag
+        run: |
+          git fetch --tags --force
+          NEW=$(comm -13 <(sort /tmp/tags_before.txt) <(git tag | sort) | grep '^v' | head -1 || true)
+          echo "tag=$NEW" >> $GITHUB_OUTPUT
+
+      - name: Trigger Docker publish
+        if: steps.new-tag.outputs.tag != ''
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            await github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'docker-publish.yml',
+              ref: '${{ steps.new-tag.outputs.tag }}'
+            });

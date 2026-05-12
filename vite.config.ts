@@ -18,4 +18,7 @@ export default defineConfig({
     dedupe: ['react', 'react-dom'],
     alias: { '@': path.resolve(__dirname, './src') },
   },
+  ssr: {
+    external: ['cheerio'],
+  },
 })
