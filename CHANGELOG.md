@@ -1,3 +1,15 @@
+# v0.0.3 (Tue May 12 2026)
+
+#### 🐛 Bug Fix
+
+- chore: updated vite build and docker deploy ([@stephansama](https://github.com/stephansama))
+
+#### Authors: 1
+
+- Stephan Randle ([@stephansama](https://github.com/stephansama))
+
+---
+
 # v0.0.2 (Tue May 12 2026)
 
 #### 🐛 Bug Fix
