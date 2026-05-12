@@ -9,6 +9,10 @@ export const user = pgTable("user", {
 	image: text("image"),
 	createdAt: timestamp("created_at").notNull(),
 	updatedAt: timestamp("updated_at").notNull(),
+	role: text("role"),
+	banned: boolean("banned").default(false),
+	banReason: text("ban_reason"),
+	banExpires: timestamp("ban_expires"),
 });
 
 export const session = pgTable("session", {
@@ -20,6 +24,7 @@ export const session = pgTable("session", {
 	ipAddress: text("ip_address"),
 	userAgent: text("user_agent"),
 	userId: text("user_id").notNull().references(() => user.id),
+	impersonatedBy: text("impersonated_by"),
 });
 
 export const account = pgTable("account", {
@@ -58,8 +63,9 @@ export const website = pgTable("website", {
     createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
-export const websiteRelations = relations(website, ({ many }) => ({
+export const websiteRelations = relations(website, ({ many, one }) => ({
     runs: many(run),
+    user: one(user, { fields: [website.userId], references: [user.id] }),
 }));
 
 export const run = pgTable("run", {

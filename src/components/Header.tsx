@@ -74,6 +74,11 @@ export function Header() {
           <Link to="/settings" className={tabClass}>
             Settings
           </Link>
+          {(session?.user as { role?: string } | undefined)?.role === 'admin' && (
+            <Link to="/admin" className={tabClass}>
+              Admin
+            </Link>
+          )}
         </nav>
 
         <div className="flex items-center gap-2">

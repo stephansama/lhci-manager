@@ -47,8 +47,11 @@ export const getWebsiteRuns = createServerFn({ method: 'GET' })
       throw new Error('Unauthorized')
     }
 
+    const isAdmin = (session.user as { role?: string }).role === 'admin'
     return await db.query.website.findFirst({
-      where: and(eq(website.id, data.websiteId), eq(website.userId, session.user.id)),
+      where: isAdmin
+        ? eq(website.id, data.websiteId)
+        : and(eq(website.id, data.websiteId), eq(website.userId, session.user.id)),
       with: {
         runs: {
           orderBy: (runs, { desc }) => [desc(runs.createdAt)],
@@ -113,7 +116,8 @@ export const getRunDetail = createServerFn({ method: 'GET' })
       },
     })
 
-    if (!runRecord || runRecord.website.userId !== session.user.id) return null
+    const isAdmin = (session.user as { role?: string }).role === 'admin'
+    if (!runRecord || (!isAdmin && runRecord.website.userId !== session.user.id)) return null
     // Cast needed: TanStack Start's serialization validator rejects `Record<string, unknown>`
     // (the Drizzle JSONB column type). The value is a plain Lighthouse LHR JSON object — safe to serialize.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

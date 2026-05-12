@@ -7,6 +7,9 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ThemeToggle } from '@/components/ThemeToggle'
+import IconGithub from '~icons/simple-icons/github'
+import IconGoogle from '~icons/simple-icons/google'
+import IconApple from '~icons/simple-icons/apple'
 
 export const Route = createFileRoute('/login')({
   beforeLoad: async () => {
@@ -20,6 +23,7 @@ function LoginComponent() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
+  const [socialLoading, setSocialLoading] = useState<string | null>(null)
   const router = useRouter()
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -31,6 +35,12 @@ function LoginComponent() {
     } else {
       router.navigate({ to: '/' })
     }
+  }
+
+  const handleSocial = async (provider: 'github' | 'google' | 'apple') => {
+    setSocialLoading(provider)
+    await authClient.signIn.social({ provider, callbackURL: '/' })
+    setSocialLoading(null)
   }
 
   const handleSignUp = async (e: React.FormEvent) => {
@@ -92,6 +102,34 @@ function LoginComponent() {
               </Button>
             </div>
           </form>
+
+          <div className="relative my-4">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t" />
+            </div>
+            <div className="relative flex justify-center">
+              <span className="bg-card px-2 text-xs text-muted-foreground">or continue with</span>
+            </div>
+          </div>
+
+          <div className="flex gap-2">
+            {([
+              { provider: 'github', icon: IconGithub, label: 'GitHub' },
+              { provider: 'google', icon: IconGoogle, label: 'Google' },
+              { provider: 'apple',  icon: IconApple,  label: 'Apple'  },
+            ] as const).map(({ provider, icon: Icon, label }) => (
+              <Button
+                key={provider}
+                type="button"
+                variant="outline"
+                className="flex-1 gap-2"
+                disabled={socialLoading !== null}
+                onClick={() => handleSocial(provider)}
+              >
+                <Icon className="w-4 h-4" />
+                <span className="sr-only">{label}</span>
+              </Button>
+            ))}</div>
         </CardContent>
       </Card>
     </div>
