@@ -1,3 +1,16 @@
+# v0.0.4 (Tue May 12 2026)
+
+#### 🐛 Bug Fix
+
+- chore: updated admin implementation ([@stephansama](https://github.com/stephansama))
+- chore: updated to look more like design ([@stephansama](https://github.com/stephansama))
+
+#### Authors: 1
+
+- Stephan Randle ([@stephansama](https://github.com/stephansama))
+
+---
+
 # v0.0.3 (Tue May 12 2026)
 
 #### 🐛 Bug Fix
