@@ -16,6 +16,13 @@ export function scoreClass(score: number | null): string {
   return 'text-red-600 dark:text-red-400 font-medium'
 }
 
+export function scoreColorVar(score: number | null): string {
+  if (score === null) return 'hsl(var(--muted-foreground))'
+  if (score >= 90) return 'var(--score-good)'
+  if (score >= 50) return 'var(--score-warn)'
+  return 'var(--score-bad)'
+}
+
 export function dotClass(score: number | null): string {
   if (score === null) return 'bg-muted-foreground'
   if (score >= 90) return 'bg-green-500'

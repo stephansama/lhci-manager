@@ -1,5 +1,4 @@
 import { Link, useRouter } from '@tanstack/react-router'
-import IconLighthouse from '~icons/simple-icons/lighthouse'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -30,6 +29,9 @@ function getInitials(name: string): string {
   return name.slice(0, 2).toUpperCase()
 }
 
+const tabClass =
+  'flex items-center px-3 h-full border-b-2 border-transparent text-sm text-muted-foreground transition-colors hover:text-foreground data-[status=active]:border-primary data-[status=active]:text-foreground'
+
 export function Header() {
   const router = useRouter()
   const [dialogOpen, setDialogOpen] = useState(false)
@@ -56,11 +58,24 @@ export function Header() {
 
   return (
     <header className="border-b">
-      <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
-        <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-          <IconLighthouse className="w-6 h-6" />
-          <h1 className="text-xl font-semibold">Lighthouse CI Manager</h1>
+      <div className="max-w-4xl mx-auto px-6 h-11 flex items-stretch">
+        <Link
+          to="/"
+          className="flex items-center mr-6 font-mono text-primary font-medium tracking-tight text-base shrink-0"
+          activeOptions={{ exact: true, includeSearch: false }}
+        >
+          LHCI
         </Link>
+
+        <nav className="flex items-stretch flex-1 gap-1">
+          <Link to="/" activeOptions={{ exact: true }} className={tabClass}>
+            Websites
+          </Link>
+          <Link to="/settings" className={tabClass}>
+            Settings
+          </Link>
+        </nav>
+
         <div className="flex items-center gap-2">
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger render={<Button size="sm" />}>
@@ -123,7 +138,7 @@ export function Header() {
             <DropdownMenuTrigger
               render={
                 <button
-                  className="w-8 h-8 rounded-full bg-primary text-primary-foreground text-xs font-semibold flex items-center justify-center shrink-0 cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  className="w-[26px] h-[26px] rounded-full border border-primary/40 bg-primary/10 text-primary text-[10px] font-mono font-semibold flex items-center justify-center shrink-0 cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   aria-label="Account menu"
                 />
               }

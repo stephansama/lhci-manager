@@ -1,4 +1,4 @@
-import { createFileRoute, Link, redirect, useRouter } from '@tanstack/react-router'
+import { createFileRoute, Link, redirect, useRouter, useNavigate } from '@tanstack/react-router'
 import { getWebsites, deleteWebsite, triggerAudit, getSession, updateWebsite, fetchMetadataForUrl } from '../services/websites'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
@@ -13,7 +13,8 @@ import IconPlay from '~icons/lucide/play'
 import IconTrash2 from '~icons/lucide/trash-2'
 import { Header } from '@/components/Header'
 import { RunStatusBadge } from '@/components/RunStatusBadge'
-import { scorePillClass } from '@/lib/score'
+import { scorePillClass, dotClass } from '@/lib/score'
+import { ScoreCell } from '@/components/ScoreCell'
 import {
   Dialog,
   DialogContent,
@@ -23,6 +24,17 @@ import {
   DialogFooter,
   DialogClose,
 } from '@/components/ui/dialog'
+
+function formatRelativeTime(date: Date): string {
+  const diff = Date.now() - date.getTime()
+  const minutes = Math.floor(diff / 60_000)
+  const hours = Math.floor(minutes / 60)
+  const days = Math.floor(hours / 24)
+  if (days > 0) return `${days}d ago`
+  if (hours > 0) return `${hours}h ago`
+  if (minutes > 0) return `${minutes}m ago`
+  return 'just now'
+}
 
 export const Route = createFileRoute('/')({
   beforeLoad: async () => {
@@ -190,87 +202,117 @@ type WebsiteViewProps = {
 }
 
 function WebsiteListView({ websites, onTrigger, onDelete, onSaved }: WebsiteViewProps) {
+  const navigate = useNavigate()
   return (
-    <div className="flex flex-col gap-3">
-      {websites.map((ws) => {
-        const latest = ws.runs[0]
-        return (
-          <Card key={ws.id} className="overflow-hidden">
-            <CardContent className="p-0 flex flex-col sm:flex-row">
-              {ws.ogImageUrl ? (
-                <Link
-                  to="/websites/$websiteId"
-                  params={{ websiteId: ws.id }}
-                  viewTransition
-                  className="sm:w-48 sm:shrink-0 h-32 sm:h-auto bg-muted overflow-hidden block shrink-0"
-                  style={{ viewTransitionName: `website-og-${ws.id}` }}
-                >
-                  <img src={ws.ogImageUrl} alt={ws.name} className="w-full h-full object-cover" />
-                </Link>
-              ) : (
-                <div className="hidden sm:block sm:w-48 sm:shrink-0 bg-muted" />
-              )}
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between flex-1 gap-2 p-4">
-                <div className="flex flex-col gap-1">
-                  <div className="flex items-center gap-1.5">
-                    {ws.faviconUrl && (
-                      <img
-                        src={ws.faviconUrl}
-                        alt=""
-                        className="w-4 h-4 object-contain shrink-0"
-                        style={{ viewTransitionName: `website-favicon-${ws.id}` }}
-                      />
-                    )}
-                    <Link
-                      to="/websites/$websiteId"
-                      params={{ websiteId: ws.id }}
-                      viewTransition
-                      className="font-medium hover:underline"
-                    >
-                      {ws.name}
-                    </Link>
-                  </div>
-                  <span className="text-sm text-muted-foreground">{ws.url}</span>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    Latest:
-                    {latest ? (
-                      <RunStatusBadge status={latest.status as RunStatus} />
-                    ) : (
-                      ' No runs yet'
-                    )}
-                  </div>
-                  {latest?.status === 'completed' && (
-                    <div className="flex flex-wrap gap-1.5">
-                      {[
-                        { label: 'Perf', value: latest.performanceScore },
-                        { label: 'A11y', value: latest.accessibilityScore },
-                        { label: 'BP',   value: latest.bestPracticesScore },
-                        { label: 'SEO',  value: latest.seoScore },
-                      ].map(({ label, value }) => (
-                        <span
-                          key={label}
-                          className={`text-xs px-2 py-0.5 rounded-full font-medium ${scorePillClass(value)}`}
-                        >
-                          {label} {value ?? '—'}
-                        </span>
-                      ))}
+    <div className="rounded-lg border overflow-hidden">
+      <table className="w-full">
+        <thead>
+          <tr className="border-b">
+            {['Site', 'Last Run', 'Performance', 'Accessibility', 'Best Practices', 'SEO', ''].map((h) => (
+              <th
+                key={h}
+                className="px-3 py-2 text-left"
+                style={{
+                  fontFamily: 'ui-monospace, monospace',
+                  fontSize: 10,
+                  fontWeight: 500,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.08em',
+                  color: 'hsl(var(--muted-foreground))',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {h}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {websites.map((ws) => {
+            const latest = ws.runs[0]
+            const completedRuns = ws.runs.filter(r => r.status === 'completed').reverse()
+            const perfTrend = completedRuns.map(r => r.performanceScore).filter((v): v is number => v !== null)
+            const a11yTrend = completedRuns.map(r => r.accessibilityScore).filter((v): v is number => v !== null)
+            const bpTrend = completedRuns.map(r => r.bestPracticesScore).filter((v): v is number => v !== null)
+            const seoTrend = completedRuns.map(r => r.seoScore).filter((v): v is number => v !== null)
+            const latestCompleted = completedRuns[completedRuns.length - 1]
+            return (
+              <tr
+                key={ws.id}
+                className="border-b last:border-0 hover:bg-muted/40 cursor-pointer group transition-colors"
+                onClick={() => navigate({ to: '/websites/$websiteId', params: { websiteId: ws.id } })}
+              >
+                <td className="px-3 py-3" onClick={(e) => e.stopPropagation()}>
+                  <div className="flex items-start gap-2">
+                    <span
+                      className={`mt-1 w-2 h-2 rounded-full shrink-0 ${
+                        latest?.status === 'completed' ? dotClass(latest.performanceScore) :
+                        latest?.status === 'running' ? 'bg-blue-500' :
+                        latest?.status === 'pending' ? 'bg-muted-foreground' :
+                        latest?.status === 'failed' ? 'bg-red-500' :
+                        'bg-muted-foreground/40'
+                      }`}
+                    />
+                    <div className="flex flex-col gap-0.5 min-w-0">
+                      <Link
+                        to="/websites/$websiteId"
+                        params={{ websiteId: ws.id }}
+                        className="font-medium text-sm hover:underline leading-snug"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {ws.name}
+                      </Link>
+                      <span
+                        className="truncate max-w-[180px]"
+                        style={{ fontFamily: 'ui-monospace, monospace', fontSize: 11, color: 'hsl(var(--muted-foreground))' }}
+                      >
+                        {ws.url}
+                      </span>
                     </div>
-                  )}
-                </div>
-                <div className="flex gap-2 shrink-0">
-                  <EditWebsiteDialog website={ws} onSaved={onSaved} />
-                  <Button size="sm" onClick={() => onTrigger(ws.id)}>
-                    Run Lighthouse
-                  </Button>
-                  <Button size="sm" variant="destructive" onClick={() => onDelete(ws.id)}>
-                    Delete
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )
-      })}
+                  </div>
+                </td>
+                <td className="px-3 py-3 text-xs text-muted-foreground whitespace-nowrap">
+                  {latest ? formatRelativeTime(new Date(latest.createdAt)) : '—'}
+                </td>
+                <td className="px-3 py-3">
+                  <ScoreCell score={latestCompleted?.performanceScore ?? null} trend={perfTrend.length >= 2 ? perfTrend : undefined} />
+                </td>
+                <td className="px-3 py-3">
+                  <ScoreCell score={latestCompleted?.accessibilityScore ?? null} trend={a11yTrend.length >= 2 ? a11yTrend : undefined} />
+                </td>
+                <td className="px-3 py-3">
+                  <ScoreCell score={latestCompleted?.bestPracticesScore ?? null} trend={bpTrend.length >= 2 ? bpTrend : undefined} />
+                </td>
+                <td className="px-3 py-3">
+                  <ScoreCell score={latestCompleted?.seoScore ?? null} trend={seoTrend.length >= 2 ? seoTrend : undefined} />
+                </td>
+                <td className="px-3 py-3" onClick={(e) => e.stopPropagation()}>
+                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <EditWebsiteDialog website={ws} onSaved={onSaved} />
+                    <Button
+                      size="icon-sm"
+                      variant="ghost"
+                      title="Run Lighthouse"
+                      onClick={() => onTrigger(ws.id)}
+                    >
+                      <IconPlay className="size-3" />
+                    </Button>
+                    <Button
+                      size="icon-sm"
+                      variant="ghost"
+                      title="Delete"
+                      onClick={() => onDelete(ws.id)}
+                      className="text-destructive hover:text-destructive"
+                    >
+                      <IconTrash2 className="size-3" />
+                    </Button>
+                  </div>
+                </td>
+              </tr>
+            )
+          })}
+        </tbody>
+      </table>
     </div>
   )
 }

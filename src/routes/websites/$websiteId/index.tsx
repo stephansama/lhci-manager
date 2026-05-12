@@ -24,7 +24,9 @@ import {
 } from '@/components/ui/table'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { LayoutList, LayoutGrid, CalendarDays, ChevronLeft, ChevronRight } from 'lucide-react'
-import { scorePillClass, scoreClass, dotClass } from '@/lib/score'
+import { scorePillClass, dotClass, scoreColorVar } from '@/lib/score'
+import { ScoreCell } from '@/components/ScoreCell'
+import { cn } from '@/lib/utils'
 
 export const Route = createFileRoute('/websites/$websiteId/')({
   beforeLoad: async () => {
@@ -80,18 +82,10 @@ function RunHistoryList({ runs, websiteId }: { runs: Run[]; websiteId: string })
               <TableCell>
                 <RunStatusBadge status={r.status as RunStatus} />
               </TableCell>
-              <TableCell className={scoreClass(r.performanceScore)}>
-                {r.performanceScore ?? '—'}
-              </TableCell>
-              <TableCell className={scoreClass(r.accessibilityScore)}>
-                {r.accessibilityScore ?? '—'}
-              </TableCell>
-              <TableCell className={scoreClass(r.bestPracticesScore)}>
-                {r.bestPracticesScore ?? '—'}
-              </TableCell>
-              <TableCell className={scoreClass(r.seoScore)}>
-                {r.seoScore ?? '—'}
-              </TableCell>
+              <TableCell><ScoreCell score={r.performanceScore} /></TableCell>
+              <TableCell><ScoreCell score={r.accessibilityScore} /></TableCell>
+              <TableCell><ScoreCell score={r.bestPracticesScore} /></TableCell>
+              <TableCell><ScoreCell score={r.seoScore} /></TableCell>
               <TableCell>
                 {r.status === 'completed' && (
                   <Link
@@ -322,7 +316,9 @@ function WebsiteDetailComponent() {
     )
   }
 
-  const latestCompleted = site.runs.find(r => r.status === 'completed')
+  const completedRuns = site.runs.filter(r => r.status === 'completed')
+  const latestCompleted = completedRuns[0]
+  const prevCompleted = completedRuns[1]
 
   const chartData = site.runs
     .filter(r => r.status === 'completed' && r.performanceScore !== null)
@@ -341,10 +337,10 @@ function WebsiteDetailComponent() {
   }
 
   const scoreCards = [
-    { key: 'performance',   label: 'Performance',    value: latestCompleted?.performanceScore ?? null },
-    { key: 'accessibility', label: 'Accessibility',  value: latestCompleted?.accessibilityScore ?? null },
-    { key: 'bestPractices', label: 'Best Practices', value: latestCompleted?.bestPracticesScore ?? null },
-    { key: 'seo',           label: 'SEO',            value: latestCompleted?.seoScore ?? null },
+    { key: 'performance',   label: 'Performance',    value: latestCompleted?.performanceScore ?? null,   prev: prevCompleted?.performanceScore ?? null },
+    { key: 'accessibility', label: 'Accessibility',  value: latestCompleted?.accessibilityScore ?? null, prev: prevCompleted?.accessibilityScore ?? null },
+    { key: 'bestPractices', label: 'Best Practices', value: latestCompleted?.bestPracticesScore ?? null, prev: prevCompleted?.bestPracticesScore ?? null },
+    { key: 'seo',           label: 'SEO',            value: latestCompleted?.seoScore ?? null,           prev: prevCompleted?.seoScore ?? null },
   ]
 
   return (
@@ -394,29 +390,39 @@ function WebsiteDetailComponent() {
         </div>
 
         {latestCompleted && (
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            {scoreCards.map(({ key, label, value }) => (
-              <Card key={key}>
-                <CardHeader>
-                  <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+          <div className="grid grid-cols-2 border rounded-lg overflow-hidden">
+            {scoreCards.map(({ key, label, value, prev }, i) => {
+              const delta = value !== null && prev !== null ? value - prev : null
+              const color = scoreColorVar(value)
+              return (
+                <div
+                  key={key}
+                  className={cn('p-4 flex flex-col gap-2', i % 2 === 0 && 'border-r', i < 2 && 'border-b')}
+                >
+                  <span style={{ fontFamily: 'ui-monospace, monospace', fontSize: 10, fontWeight: 500, textTransform: 'uppercase' as const, letterSpacing: '0.08em', color: 'hsl(var(--muted-foreground))' }}>
                     {label}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="flex flex-col gap-1">
-                  <span className={`text-4xl font-bold tabular-nums ${scoreClass(value)}`}>
+                  </span>
+                  <span style={{ fontFamily: 'ui-monospace, monospace', fontSize: 48, fontWeight: 300, color, lineHeight: 1 }}>
                     {value ?? '—'}
                   </span>
-                  <span className="text-xs text-muted-foreground">{scoreLabel(value)}</span>
-                </CardContent>
-              </Card>
-            ))}
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground">{scoreLabel(value)}</span>
+                    {delta !== null && (
+                      <span className={`text-xs font-medium tabular-nums ${delta > 0 ? 'text-green-600 dark:text-green-400' : delta < 0 ? 'text-red-600 dark:text-red-400' : 'text-muted-foreground'}`}>
+                        {delta > 0 ? '+' : ''}{delta}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )
+            })}
           </div>
         )}
 
         {chartData.length >= 2 && (
           <Card>
             <CardHeader>
-              <CardTitle>Score Trends</CardTitle>
+              <CardTitle className="section-label">Score Trends</CardTitle>
               <CardDescription>
                 {chartData.length} completed run{chartData.length !== 1 ? 's' : ''}
               </CardDescription>
@@ -441,7 +447,7 @@ function WebsiteDetailComponent() {
 
         <div>
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-medium">Run History</h2>
+            <p className="section-label">Run History</p>
             <div className="flex items-center gap-1">
               <Button
                 variant={viewMode === 'list' ? 'secondary' : 'ghost'}
