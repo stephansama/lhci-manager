@@ -22,6 +22,8 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { addWebsite } from '@/services/websites'
 import { authClient } from '@/lib/auth-client'
+import { ScheduleField } from '@/components/ScheduleField'
+import { presetToCron, type SchedulePreset } from '@/lib/cron'
 
 function getInitials(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean)
@@ -38,15 +40,27 @@ export function Header() {
   const [name, setName] = useState('')
   const [url, setUrl] = useState('')
   const [formFactor, setFormFactor] = useState<'mobile' | 'desktop'>('mobile')
+  const [schedulePreset, setSchedulePreset] = useState<SchedulePreset>('off')
+  const [customCron, setCustomCron] = useState('')
+  const [error, setError] = useState<string | null>(null)
   const { data: session } = authClient.useSession()
   const initials = getInitials(session?.user.name ?? '')
 
   const handleAddWebsite = async (e: React.FormEvent) => {
     e.preventDefault()
-    await addWebsite({ data: { name, url, formFactor } })
+    setError(null)
+    const cronExpression = presetToCron(schedulePreset, customCron)
+    try {
+      await addWebsite({ data: { name, url, formFactor, cronExpression } })
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to add website')
+      return
+    }
     setName('')
     setUrl('')
     setFormFactor('mobile')
+    setSchedulePreset('off')
+    setCustomCron('')
     setDialogOpen(false)
     router.invalidate()
   }
@@ -68,98 +82,120 @@ export function Header() {
         </Link>
 
         <nav className="flex items-stretch flex-1 gap-1">
-          <Link to="/" activeOptions={{ exact: true }} className={tabClass}>
-            Websites
-          </Link>
-          <Link to="/settings" className={tabClass}>
-            Settings
-          </Link>
-          {(session?.user as { role?: string } | undefined)?.role === 'admin' && (
-            <Link to="/admin" className={tabClass}>
-              Admin
-            </Link>
+          {session && (
+            <>
+              <Link to="/" activeOptions={{ exact: true }} className={tabClass}>
+                Websites
+              </Link>
+              <Link to="/settings" className={tabClass}>
+                Settings
+              </Link>
+              {(session.user as { role?: string }).role === 'admin' && (
+                <Link to="/admin" className={tabClass}>
+                  Admin
+                </Link>
+              )}
+            </>
           )}
         </nav>
 
         <div className="flex items-center gap-2">
-          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-            <DialogTrigger render={<Button size="sm" />}>
-              + Add Website
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Add Website</DialogTitle>
-              </DialogHeader>
-              <form onSubmit={handleAddWebsite} className="flex flex-col gap-4">
-                <div className="flex flex-col gap-1.5">
-                  <Label htmlFor="site-name">Name</Label>
-                  <Input
-                    id="site-name"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="My Website"
-                    required
-                  />
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  <Label htmlFor="site-url">URL</Label>
-                  <Input
-                    id="site-url"
-                    type="url"
-                    value={url}
-                    onChange={(e) => setUrl(e.target.value)}
-                    placeholder="https://example.com"
-                    required
-                  />
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  <Label>Form Factor</Label>
-                  <div className="flex gap-2">
-                    {(['mobile', 'desktop'] as const).map((ff) => (
-                      <Button
-                        key={ff}
-                        type="button"
-                        variant={formFactor === ff ? 'default' : 'outline'}
-                        size="sm"
-                        className="flex-1 capitalize"
-                        onClick={() => setFormFactor(ff)}
-                      >
-                        {ff}
-                      </Button>
-                    ))}
-                  </div>
-                </div>
-                <DialogFooter>
-                  <DialogClose render={<Button type="button" variant="outline" />}>
-                    Cancel
-                  </DialogClose>
-                  <Button type="submit">Add</Button>
-                </DialogFooter>
-              </form>
-            </DialogContent>
-          </Dialog>
-          <ThemeToggle />
-          <DropdownMenu>
-            <DropdownMenuTrigger
-              render={
-                <button
-                  className="w-[26px] h-[26px] rounded-full border border-primary/40 bg-primary/10 text-primary text-[10px] font-mono font-semibold flex items-center justify-center shrink-0 cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                  aria-label="Account menu"
-                />
-              }
-            >
-              {initials || '?'}
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem render={<Link to="/settings" />}>
-                Settings
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onSelect={handleLogout}>
-                Logout
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          {session ? (
+            <>
+              <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+                <DialogTrigger render={<Button size="sm" />}>
+                  + Add Website
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Add Website</DialogTitle>
+                  </DialogHeader>
+                  <form onSubmit={handleAddWebsite} className="flex flex-col gap-4">
+                    <div className="flex flex-col gap-1.5">
+                      <Label htmlFor="site-name">Name</Label>
+                      <Input
+                        id="site-name"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        placeholder="My Website"
+                        required
+                      />
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <Label htmlFor="site-url">URL</Label>
+                      <Input
+                        id="site-url"
+                        type="url"
+                        value={url}
+                        onChange={(e) => setUrl(e.target.value)}
+                        placeholder="https://example.com"
+                        required
+                      />
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <Label>Form Factor</Label>
+                      <div className="flex gap-2">
+                        {(['mobile', 'desktop'] as const).map((ff) => (
+                          <Button
+                            key={ff}
+                            type="button"
+                            variant={formFactor === ff ? 'default' : 'outline'}
+                            size="sm"
+                            className="flex-1 capitalize"
+                            onClick={() => setFormFactor(ff)}
+                          >
+                            {ff}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+                    <ScheduleField
+                      preset={schedulePreset}
+                      customCron={customCron}
+                      onPresetChange={setSchedulePreset}
+                      onCustomCronChange={setCustomCron}
+                    />
+                    {error && <p className="text-xs text-destructive">{error}</p>}
+                    <DialogFooter>
+                      <DialogClose render={<Button type="button" variant="outline" />}>
+                        Cancel
+                      </DialogClose>
+                      <Button type="submit">Add</Button>
+                    </DialogFooter>
+                  </form>
+                </DialogContent>
+              </Dialog>
+              <ThemeToggle />
+              <DropdownMenu>
+                <DropdownMenuTrigger
+                  render={
+                    <button
+                      className="w-[26px] h-[26px] rounded-full border border-primary/40 bg-primary/10 text-primary text-[10px] font-mono font-semibold flex items-center justify-center shrink-0 cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      aria-label="Account menu"
+                    />
+                  }
+                >
+                  {initials || '?'}
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem render={<Link to="/settings" />}>
+                    Settings
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onSelect={handleLogout}>
+                    Logout
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </>
+          ) : (
+            <>
+              <ThemeToggle />
+              <Link to="/login">
+                <Button size="sm" variant="outline">Sign in</Button>
+              </Link>
+            </>
+          )}
         </div>
       </div>
     </header>

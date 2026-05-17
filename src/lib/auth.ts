@@ -1,8 +1,12 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { admin } from "better-auth/plugins/admin";
+import { passkey } from "@better-auth/passkey";
 import { db } from "../db";
 import * as schema from "../db/schema";
+
+const baseUrl = process.env.BETTER_AUTH_URL;
+const rpID = baseUrl ? new URL(baseUrl).hostname : "localhost";
 
 export const auth = betterAuth({
     database: drizzleAdapter(db, {
@@ -12,7 +16,14 @@ export const auth = betterAuth({
     emailAndPassword: {
         enabled: true,
     },
-    plugins: [admin()],
+    plugins: [
+        admin(),
+        passkey({
+            rpName: "LHCI Manager",
+            rpID,
+            origin: baseUrl ?? null,
+        }),
+    ],
     socialProviders: {
         ...(process.env.GITHUB_CLIENT_ID ? {
             github: {

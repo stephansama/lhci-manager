@@ -52,6 +52,20 @@ export const verification = pgTable("verification", {
 	updatedAt: timestamp("updated_at"),
 });
 
+export const passkey = pgTable("passkey", {
+	id: text("id").primaryKey(),
+	name: text("name"),
+	publicKey: text("public_key").notNull(),
+	userId: text("user_id").notNull().references(() => user.id),
+	credentialID: text("credential_id").notNull(),
+	counter: integer("counter").notNull(),
+	deviceType: text("device_type").notNull(),
+	backedUp: boolean("backed_up").notNull(),
+	transports: text("transports"),
+	createdAt: timestamp("created_at"),
+	aaguid: text("aaguid"),
+});
+
 export const website = pgTable("website", {
     id: uuid("id").defaultRandom().primaryKey(),
     userId: text("user_id").notNull().references(() => user.id),
@@ -60,6 +74,9 @@ export const website = pgTable("website", {
     faviconUrl: text("favicon_url"),
     ogImageUrl: text("og_image_url"),
     formFactor: text("form_factor", { enum: ["mobile", "desktop"] }).default("mobile").notNull(),
+    visibility: text("visibility", { enum: ["private", "public_latest", "public_all"] }).default("private").notNull(),
+    cronExpression: text("cron_expression"),
+    lastScheduledRunAt: timestamp("last_scheduled_run_at"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -79,6 +96,7 @@ export const run = pgTable("run", {
     pwaScore: integer("pwa_score"),
     fullReportJson: jsonb("full_report_json").$type<Record<string, unknown>>(),
     thumbnailDataUrl: text("thumbnail_data_url"),
+    isPublic: boolean("is_public").default(false).notNull(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     completedAt: timestamp("completed_at"),
 });
@@ -89,3 +107,8 @@ export const runRelations = relations(run, ({ one }) => ({
         references: [website.id],
     }),
 }));
+
+export const workerHeartbeat = pgTable("worker_heartbeat", {
+    id: integer("id").primaryKey(),
+    lastHeartbeatAt: timestamp("last_heartbeat_at").defaultNow().notNull(),
+});

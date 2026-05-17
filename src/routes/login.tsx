@@ -10,6 +10,7 @@ import { ThemeToggle } from '@/components/ThemeToggle'
 import IconGithub from '~icons/simple-icons/github'
 import IconGoogle from '~icons/simple-icons/google'
 import IconApple from '~icons/simple-icons/apple'
+import { KeyRound } from 'lucide-react'
 
 export const Route = createFileRoute('/login')({
   beforeLoad: async () => {
@@ -58,6 +59,19 @@ function LoginComponent() {
       router.navigate({ to: '/' })
     }
   }
+
+  const handlePasskey = async () => {
+    setError('')
+    const result = await authClient.signIn.passkey()
+    if (result?.error) {
+      setError(result.error.message ?? 'Passkey sign-in failed')
+    } else {
+      router.navigate({ to: '/' })
+    }
+  }
+
+  const passkeySupported =
+    typeof window !== 'undefined' && typeof window.PublicKeyCredential !== 'undefined'
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background relative">
@@ -111,6 +125,18 @@ function LoginComponent() {
               <span className="bg-card px-2 text-xs text-muted-foreground">or continue with</span>
             </div>
           </div>
+
+          {passkeySupported && (
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full gap-2 mb-2"
+              onClick={handlePasskey}
+            >
+              <KeyRound size={16} />
+              Sign in with passkey
+            </Button>
+          )}
 
           <div className="flex gap-2">
             {([

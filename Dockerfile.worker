@@ -24,4 +24,8 @@ RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
 FROM base
 COPY --from=build /app /app
 WORKDIR /app
+RUN groupadd -r app && useradd -r -g app -G audio,video app \
+    && mkdir -p /home/app \
+    && chown -R app:app /home/app /app
+USER app
 CMD [ "pnpm", "worker" ]
