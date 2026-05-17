@@ -1,3 +1,15 @@
+# v0.0.6 (Sun May 17 2026)
+
+#### 🐛 Bug Fix
+
+- chore: updated lhci-manager implementation ([@stephansama](https://github.com/stephansama))
+
+#### Authors: 1
+
+- Stephan Randle ([@stephansama](https://github.com/stephansama))
+
+---
+
 # v0.0.5 (Sun May 17 2026)
 
 #### 🐛 Bug Fix
