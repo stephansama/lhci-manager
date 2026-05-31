@@ -86,7 +86,6 @@ async function startWorker() {
           '--headless=new',
           '--no-sandbox',
           '--disable-gpu',
-          '--disable-dev-shm-usage',
         ],
       });
 

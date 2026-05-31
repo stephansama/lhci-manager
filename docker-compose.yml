@@ -17,7 +17,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-    mem_limit: 512m
+    mem_limit: 1g
 
   web:
     build:
@@ -40,7 +40,7 @@ services:
       timeout: 5s
       retries: 3
       start_period: 30s
-    mem_limit: 512m
+    mem_limit: 1536m
 
   worker:
     build:
@@ -60,8 +60,9 @@ services:
       timeout: 5s
       retries: 3
       start_period: 15s
+    init: true
     shm_size: '1gb'
-    mem_limit: 1g
+    mem_limit: 2g
 
 volumes:
   postgres_data:

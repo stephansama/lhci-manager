@@ -10,7 +10,7 @@
     "dev:services": "docker compose up db worker -d",
     "dev:stop": "docker compose down",
     "build": "vite build",
-    "start": "npm run db:push && vite preview --host 0.0.0.0 --port 3000",
+    "start": "npm run db:push && node .output/server/index.mjs",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
     "worker": "tsx src/worker/index.ts"
@@ -32,6 +32,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cron-parser": "^5.5.0",
+    "drizzle-kit": "latest",
     "drizzle-orm": "latest",
     "fumadocs-core": "^16.8.9",
     "lighthouse": "^13.3.0",
@@ -59,7 +60,6 @@
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "@vitejs/plugin-react": "latest",
-    "drizzle-kit": "latest",
     "tsx": "^4.11.0",
     "typescript": "^5.4.5",
     "vite": "latest"

@@ -63,6 +63,7 @@ export const getWebsiteRuns = createServerFn({ method: 'GET' })
         : and(eq(website.id, data.websiteId), eq(website.userId, session.user.id)),
       with: {
         runs: {
+          limit: 50,
           orderBy: (runs, { desc }) => [desc(runs.createdAt)],
           columns: { fullReportJson: false },
         }
